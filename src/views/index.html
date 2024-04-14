@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Usuário</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1, h2 {
+            color: #007aff;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            margin-bottom: 5px;
+            display: block;
+            font-weight: bold;
+        }
+        input {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 250px;
+            display: block;
+        }
+        button {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #005ecb;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: white;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        }
+        button.delete {
+            background-color: #ff3b30;
+        }
+        button.delete:hover {
+            background-color: #ff1e15;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cadastro de Usuário</h1>
+    <form action="/usuarios/cadastrar" method="POST">
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" required><br><br>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+        
+        <label for="senha">Senha:</label>
+        <input type="password" id="senha" name="senha" required><br><br>
+        
+        <button type="submit">Cadastrar</button>
+    </form>
+
+    <h2>Usuários Cadastrados</h2>
+    <ul id="userList"></ul>
+
+    <div id="updateForm" style="display:none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h2>Atualizar Usuário</h2>
+        <form id="formUpdate">
+            <label for="nomeUpdate">Nome:</label>
+            <input type="text" id="nomeUpdate" name="nome" required><br><br>
+    
+            <label for="emailUpdate">Email:</label>
+            <input type="email" id="emailUpdate" name="email" required><br><br>
+    
+            <label for="senhaUpdate">Senha:</label>
+            <input type="password" id="senhaUpdate" name="senha" required><br><br>
+    
+            <button type="button" onclick="updateUser(currentUserId)">Atualizar</button>
+        </form>
+    </div>
+
+    <script>
+        function loadUsers() {
+            axios.get('/usuarios/')
+                .then(function(response) {
+                    const userList = document.getElementById('userList');
+                    userList.innerHTML = '';
+                    response.data.forEach(user => {
+                        const userItem = document.createElement('li');
+                        userItem.textContent = `Nome: ${user.nome}, Email: ${user.email} `;
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Deletar';
+                        deleteButton.style.marginLeft = '10px';
+                        deleteButton.onclick = function() { deleteUser(user._id); };
+                        userItem.appendChild(deleteButton);
+
+                        const updateButton = document.createElement('button');
+                        updateButton.textContent = 'Atualizar';
+                        updateButton.style.marginLeft = '10px';
+                        updateButton.onclick = function() { showUpdateForm(user._id, user.nome, user.email); };
+                        userItem.appendChild(updateButton);
+
+                        userList.appendChild(userItem);
+                    });
+                })
+                .catch(function(error) {
+                    console.error('Erro ao buscar usuários:', error);
+                });
+        }
+
+        function deleteUser(userId) {
+            axios.delete(`/usuarios/${userId}`)
+                .then(function() {
+                    alert('Usuário deletado com sucesso!');
+                    loadUsers();
+                })
+                .catch(function(error) {
+                    alert('Erro ao deletar usuário: ' + error.response.data.message);
+                });
+        }
+
+        let currentUserId = null; 
+
+        function showUpdateForm(userId, nome, email) {
+            currentUserId = userId;
+            document.getElementById('nomeUpdate').value = nome;
+            document.getElementById('emailUpdate').value = email;
+            document.getElementById('updateForm').style.display = 'block';
+        }
+
+        function updateUser(userId) {
+            const nome = document.getElementById('nomeUpdate').value;
+            const email = document.getElementById('emailUpdate').value;
+            const senha = document.getElementById('senhaUpdate').value;
+
+            axios.put(`/usuarios/${userId}`, { nome, email, senha })
+                .then(function(response) {
+                    alert('Usuário atualizado com sucesso!');
+                    document.getElementById('updateForm').style.display = 'none';
+                    loadUsers(); 
+                })
+                .catch(function(error) {
+                    alert('Erro ao atualizar usuário: ' + error.response.data.message);
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadUsers);
+    </script>
+</body>
+</html>
